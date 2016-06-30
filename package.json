@@ -1,0 +1,27 @@
+{
+  "name": "func-it-up",
+  "version": "0.0.0",
+  "description": "",
+  "main": "func-it-up.js",
+  "scripts": {
+    "test": "ava",
+    "lint": "eslint ."
+  },
+  "author": "Isaac Andela",
+  "license": "ISC",
+  "devDependencies": {
+    "ava": "^0.15.2",
+    "eslint": "^2.13.1",
+    "eslint-plugin-import": "^1.9.2"
+  },
+  "ava": {
+    "files": "**/*.spec.js",
+    "require": [
+      "babel-register"
+    ],
+    "babel": "inherit"
+  },
+  "dependencies": {
+    "immutable": "^3.8.1"
+  }
+}
