@@ -12,6 +12,9 @@ const getArity = (fn) => typeof fn === 'function' ? fn.length : 0;
 
 export const curry = (fn) => curryArity(getArity(fn), fn);
 
+const executePipe = (arg, fn) => fn(arg);
+
+export const pipe = (...fns)  => (arg) => fns.reduce(executePipe, arg);
 
 const negate = (fn) => (...args) => !fn(...args);
 const unexisting = (obj) => obj === null || typeof obj === 'undefined';

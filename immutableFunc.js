@@ -1,6 +1,8 @@
 /*eslint-disable max-len*/
-import {Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet} from 'immutable';
-import {funcItUp} from './funcItUp.js';
+import {analyze} from 'escope';
+import {parse} from 'esprima';
+import {fromJS, Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet} from 'immutable';
+import {funcItUp, pipe} from './funcItUp.js';
 /*eslint-enable max-len*/
 
 const isFunction = (val) => typeof val === 'function';
@@ -18,16 +20,44 @@ const constructors = List([
 	OrderedMap,
 	OrderedSet,
 	Seq,
-	Seq.Indexed,
-	Seq.Keyed,
-	Seq.Set,
 ]);
 
-const hasInfiniteArity = (func) => /\barguments\b/.test(func.toString());
+const getFuncString = (func) => `var x = ${func.toString()}`;
+
+const getScopes = (source) => {
+    const ast = parse(source);
+    const scopes = analyze(ast).scopes;
+
+	return scopes;
+};
+
+const findFuncScope = (scopes) => (
+	scopes.find((scope) => (
+		scope.type === 'function' &&
+		scope.hasOwnProperty('upper') &&
+		scope.upper.type) === 'global'
+	)
+);
+
+const isReferencingArguments = (scope) => (
+	scope.hasOwnProperty('variables') &&
+	scope.variables.some((variable) => (
+		variable.name === 'arguments' &&
+		variable.hasOwnProperty('references') &&
+		variable.references.length > 0
+	))
+);
+
+const hasNoArity = pipe(
+	getFuncString,
+	getScopes,
+	findFuncScope,
+	isReferencingArguments
+);
 
 const getArity = (func) => (
-	hasInfiniteArity(func) ?
-		Infinity :
+	hasNoArity(func) ?
+		-1 :
 		func.length
 );
 
