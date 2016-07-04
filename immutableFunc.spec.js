@@ -7,7 +7,7 @@ test('NoArity', (t) => {
 		`${entry.get('methodName')}: ${entry.get('arity')}`
 	)).join('\n'));
 	t.is(
-		functionKeys.countBy((entry) => entry.get('arity')).get(-1),
+		functionKeys.filter((entry) => entry.get('arity') === -1).count(),
 		20,
 		'without arity count'
 	);

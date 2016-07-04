@@ -1,7 +1,7 @@
 /*eslint-disable max-len*/
 import {analyze} from 'escope';
 import {parse} from 'esprima';
-import {fromJS, Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet} from 'immutable';
+import {Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet} from 'immutable';
 import {funcItUp, pipe} from './funcItUp.js';
 /*eslint-enable max-len*/
 
