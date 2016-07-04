@@ -65,8 +65,10 @@ export const funcItUpWithLimit = (methodName, limit) => (
 // 	execute(methodName, args, obj)
 // );
 
-export const funcItUp = (methodName) => {
-	const execMethod = (...args) => (obj) => execute(methodName, args, obj);
+export const funcItUp = (methodName, arity) => {
+	const execMethod = arity === 0 ?
+		(...args) => (obj) => execute(methodName, args, obj) :
+		(obj) => execute(methodName, obj);
 
 	execMethod.withArity = (arity) => funcItUpWithArity(methodName, arity);
 	execMethod.withLimit = (limit) => funcItUpWithLimit(methodName, limit);
