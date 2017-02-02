@@ -23,13 +23,6 @@
     "immutable": "^3.8.1",
     "jest": "^18.1.0"
   },
-  "ava": {
-    "files": "**/*.spec.js",
-    "require": [
-      "babel-register"
-    ],
-    "babel": "inherit"
-  },
   "dependencies": {
   }
 }
