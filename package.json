@@ -1,8 +1,8 @@
 {
-  "name": "func-it-up",
+  "name": "immutable-func",
   "version": "0.0.0",
   "description": "",
-  "main": "func-it-up.js",
+  "main": "immutableFunc.js",
   "scripts": {
     "test": "jest",
     "testwatch": "jest --watch",
