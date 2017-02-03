@@ -1,10 +1,10 @@
 /*eslint-env node*/
 
 /*eslint-disable max-len*/
-import {analyze} from 'escope';
-import {parse as getAbstractSyntaxTree} from 'esprima';
-import {Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet, fromJS} from 'immutable';
-import {writeFileSync} from 'fs';
+const {analyze} = require('escope');
+const {parse: getAbstractSyntaxTree} = require('esprima');
+const {Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet, fromJS} = require('immutable');
+const {writeFileSync} = require('fs');
 /*eslint-enable max-len*/
 
 const executePipe = (arg, fn) => fn(arg);
@@ -143,7 +143,7 @@ const isFaultyMethod = (methodInfo) => (
 	methodInfo.get('arity') === Infinity
 );
 
-export const getMethodInfoList = (constructors) => (
+const getMethodInfoList = (constructors) => (
 	getPrototypes(constructors)
 		.reduce(addMethodsFromPrototype, Set())
 		.filterNot(isFaultyMethod)
@@ -180,15 +180,15 @@ const generateMethod = (methodInfo) => {
 	);
 };
 
-export const generateMethodLines = (methodInfoList) => (
+const generateMethodLines = (methodInfoList) => (
 	methodInfoList.map(generateMethod)
 );
 
-export const generateCode = (methodInfoList) => (
+const generateCode = (methodInfoList) => (
 	generateMethodLines(methodInfoList).join('\n')
 );
 
-export const getConstructors = () => (
+const getConstructors = () => (
 	List([
 		Map,
 		Set,
@@ -201,10 +201,14 @@ export const getConstructors = () => (
 	])
 );
 
-export const getCode = pipe(getConstructors, getMethodInfoList, generateCode);
+const getCode = pipe(getConstructors, getMethodInfoList, generateCode);
 
-export const writeImmutableFuncFile = (fileName) => {
+const writeImmutableFuncFile = (fileName) => {
 	const code = getCode();
 
 	writeFileSync(fileName, code);
+};
+
+module.exports = {
+	writeImmutableFuncFile,
 };

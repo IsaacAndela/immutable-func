@@ -1,6 +1,6 @@
 /*eslint-env node*/
-import {join as joinPath} from 'path';
-import {writeImmutableFuncFile} from './immutableFuncGenerator';
+const {join: joinPath} = require('path');
+const {writeImmutableFuncFile} = require('./immutableFuncGenerator');
 
 const getOutputPath = () => joinPath(process.cwd(), 'immutableFunc.js');
 

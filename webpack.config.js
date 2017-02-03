@@ -1,11 +1,5 @@
 /*eslint-env node*/
 
-const packageJson = require('./package.json');
-const babelrc = Object.assign({}, packageJson.babel);
-
-// ES6 Modules are handled by Webpack so Babel does not have to convert them
-babelrc.presets.find((preset) => preset[0] === 'es2015').push({modules: false});
-
 module.exports = function (env, argv) {
 	const minimize = argv['optimize-minimize'] || argv.optimizeMinimize;
 
@@ -24,7 +18,6 @@ module.exports = function (env, argv) {
 					test: /\.js$/,
 					exclude: /(node_modules)/,
 					loader: 'babel-loader',
-					options: babelrc,
 				},
 			],
 		},
