@@ -7,7 +7,7 @@
     "test": "jest",
     "testwatch": "jest --watch",
     "build": "babel-node src/build.js && webpack && webpack -p",
-    "prepublish": "yarn run lint && yarn run test && yarn run build"
+    "clean": "rimraf ./immutableFunc.*"
   },
   "main": "immutableFunc.umd.js",
   "files": [
@@ -31,6 +31,7 @@
     "esprima": "^2.7.2",
     "immutable": "^3.8.1",
     "jest": "^18.1.0",
+    "rimraf": "^2.5.4",
     "webpack": "^2.2.1"
   },
   "dependencies": {},
