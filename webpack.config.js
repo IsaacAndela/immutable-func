@@ -6,22 +6,27 @@ const babelrc = Object.assign({}, packageJson.babel);
 // ES6 Modules are handled by Webpack so Babel does not have to convert them
 babelrc.presets.find((preset) => preset[0] === 'es2015').push({modules: false});
 
-module.exports = {
-	entry: './immutableFunc.js',
+module.exports = function (env, argv) {
+	const minimize = argv['optimize-minimize'] || argv.optimizeMinimize;
 
-	output: {
-		filename: 'immutableFunc.umd.js',
-		library: 'immutableFunc',
-		libraryTarget: 'umd',
-	},
-	module: {
-		rules: [
-			{
-				test: /\.js$/,
-				exclude: /(node_modules)/,
-				loader: 'babel-loader',
-				options: babelrc,
-			},
-		],
-	},
+	return {
+		entry: './immutableFunc.js',
+		devtool: 'source-map',
+
+		output: {
+			filename: `immutableFunc.umd${minimize ? '.min' : ''}.js`,
+			library: 'immutableFunc',
+			libraryTarget: 'umd',
+		},
+		module: {
+			rules: [
+				{
+					test: /\.js$/,
+					exclude: /(node_modules)/,
+					loader: 'babel-loader',
+					options: babelrc,
+				},
+			],
+		},
+	};
 };

@@ -2,13 +2,21 @@
   "name": "immutable-func",
   "version": "0.0.0",
   "description": "",
-  "main": "immutableFunc.js",
   "scripts": {
+    "lint": "eslint .",
     "test": "jest",
     "testwatch": "jest --watch",
-    "build": "babel-node src/build.js && webpack",
-    "lint": "eslint ."
+    "build": "babel-node src/build.js && webpack && webpack -p",
+    "prepublish": "yarn run lint && yarn run test && yarn run build"
   },
+  "main": "immutableFunc.umd.js",
+  "files": [
+    "immutableFunc.js",
+    "immutableFunc.umd.js",
+    "immutableFunc.umd.js.map",
+    "immutableFunc.umd.min.js",
+    "immutableFunc.umd.min.js.map"
+  ],
   "author": "Isaac Andela",
   "license": "ISC",
   "devDependencies": {
@@ -25,10 +33,14 @@
     "jest": "^18.1.0",
     "webpack": "^2.2.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "uglify-js": "^2.7.5"
+  },
   "babel": {
     "presets": [
-      ["es2015"]
+      [
+        "es2015"
+      ]
     ]
   }
 }
