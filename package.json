@@ -33,9 +33,7 @@
     "jest": "^18.1.0",
     "webpack": "^2.2.1"
   },
-  "dependencies": {
-    "uglify-js": "^2.7.5"
-  },
+  "dependencies": {},
   "babel": {
     "presets": [
       [
