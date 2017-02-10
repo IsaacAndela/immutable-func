@@ -7,9 +7,9 @@ const {Map, Set, List, Stack, Record, Seq, OrderedMap, OrderedSet, fromJS} = req
 const {writeFileSync} = require('fs');
 /*eslint-enable max-len*/
 
-const executePipe = (arg, fn) => fn(arg);
+const executeWith = (arg, fn) => fn(arg);
 
-const pipe = (...fns) => (arg) => fns.reduce(executePipe, arg);
+const composeLeft = (...fns) => (arg) => fns.reduce(executeWith, arg);
 
 const isFunction = (val) => typeof val === 'function';
 
@@ -42,10 +42,6 @@ const isAllowedVarName = (str) => (
 	})
 );
 
-const isAllowedVarNameWithLog = (str) => (
-	isAllowedVarName(str) || console.log('disallowed', str) || false
-);
-
 const isNotConstructor = (methodName) => (methodName !== 'constructor');
 
 const getFuncString = (func) => `var x = ${func.toString()}`;
@@ -69,7 +65,7 @@ const isReferencingArguments = (scope) => (
 	))
 );
 
-const isScopeReferencingArguments = pipe(
+const isScopeReferencingArguments = composeLeft(
 	getScopes,
 	findFuncScope,
 	isReferencingArguments
@@ -83,7 +79,7 @@ const getAstParams = (funcDeclaration) => (
 const isAstRestParam = (param) => param.get('type') === 'RestElement';
 const hasAstRestParam = (params) => params.some(isAstRestParam);
 
-const hasRestParam = pipe(
+const hasRestParam = composeLeft(
 	getAstBody,
 	getAstFuncDeclaration,
 	getAstParams,
@@ -93,7 +89,7 @@ const hasRestParam = pipe(
 // A function has an undefined arity if the arguments object
 // is referenced in its scope or
 // if it has a rest param
-const hasUndefinedArity = pipe(
+const hasUndefinedArity = composeLeft(
 	getFuncString,
 	getAbstractSyntaxTree,
 	(ast) => (
@@ -108,6 +104,18 @@ const getArity = (func) => (
 		func.length
 );
 
+// Handwork in case method and arity detection cannot be determined automaticly
+const manualCorrections = (methodInfo) => {
+	if (
+		methodInfo.get('methodName') === 'shift' &&
+		methodInfo.get('arity') === Infinity
+	) {
+		return methodInfo.set('arity', 0);
+	} else {
+		return methodInfo;
+	}
+};
+
 const filterMethods = (obj) => {
 	let memo = Set();
 
@@ -117,12 +125,13 @@ const filterMethods = (obj) => {
 		if (
 			isFunction(maybeFunc) &&
 			isNotConstructor(methodName) &&
-			isAllowedVarNameWithLog(methodName)
+			isAllowedVarName(methodName)
 		) {
-			memo = memo.add(Map([
+			const methodInfo = Map([
 				['methodName', methodName],
 				['arity', getArity(maybeFunc)],
-			]));
+			]);
+			memo = memo.add(manualCorrections(methodInfo));
 		}
 	}
 
@@ -137,23 +146,20 @@ const addMethodsFromPrototype = (methodSet, prototype) => (
 	methodSet.union(filterMethods(prototype))
 );
 
-// Handwork in case method and arity detection cannot be done automatic
-const isFaultyMethod = (methodInfo) => (
-	methodInfo.get('methodName') === 'shift' &&
-	methodInfo.get('arity') === Infinity
-);
-
 const getMethodInfoList = (constructors) => (
 	getPrototypes(constructors)
 		.reduce(addMethodsFromPrototype, Set())
-		.filterNot(isFaultyMethod)
 		.sortBy((methodInfo) => methodInfo.get('methodName'))
+);
+
+const generateMethodCheck = (methodName) => (
+	`(obj != null && typeof obj.${methodName} === 'function')`
 );
 
 const generateMethodWithArgs = (methodName, arity) => (
 `// Arity: ${arity}
 export const ${methodName} = (...args) => (obj) => (
-	(obj != null && typeof obj.${methodName} === 'function') ?
+	${generateMethodCheck(methodName)} ?
 		obj.${methodName}(...args) :
 		undefined
 );
@@ -162,7 +168,7 @@ export const ${methodName} = (...args) => (obj) => (
 const generateMethodWithoutArgs = (methodName, arity) => (
 `// Arity: ${arity}
 export const ${methodName} = (obj) => (
-	(obj != null && typeof obj.${methodName} === 'function') ?
+	${generateMethodCheck(methodName)} ?
 		obj.${methodName}() :
 		undefined
 );
@@ -201,14 +207,15 @@ const getConstructors = () => (
 	])
 );
 
-const getCode = pipe(getConstructors, getMethodInfoList, generateCode);
+const getImmutableInfo = composeLeft(getConstructors, getMethodInfoList);
+exports.getImmutableInfo = getImmutableInfo;
+
+const getCode = composeLeft(getImmutableInfo, generateCode);
+exports.getCode = getCode;
 
 const writeImmutableFuncFile = (fileName) => {
 	const code = getCode();
 
 	writeFileSync(fileName, code);
 };
-
-module.exports = {
-	writeImmutableFuncFile,
-};
+exports.writeImmutableFuncFile = writeImmutableFuncFile;
