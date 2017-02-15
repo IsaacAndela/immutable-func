@@ -50,9 +50,7 @@ const getScopes = (abstractSyntaxTree) => analyze(abstractSyntaxTree).scopes;
 
 const findFuncScope = (scopes) => (
 	scopes.find((scope) => (
-		scope.type === 'function' &&
-		scope.hasOwnProperty('upper') &&
-		scope.upper.type === 'global'
+		scope.type === 'function'
 	))
 );
 
@@ -117,39 +115,70 @@ const manualCorrections = (methodInfo) => {
 };
 
 const filterMethods = (obj) => {
-	let memo = Set();
+	let matches = Set().asMutable();
+	let rejections = Set().asMutable();
 
+	// Using "for ... in" to iterate over all enumarable properties
+	// including those up the prototype chain
 	for (let methodName in obj) {
 		const maybeFunc = obj[methodName];
 
 		if (
 			isFunction(maybeFunc) &&
-			isNotConstructor(methodName) &&
-			isAllowedVarName(methodName)
+			isNotConstructor(methodName)
 		) {
-			const methodInfo = Map([
-				['methodName', methodName],
-				['arity', getArity(maybeFunc)],
-			]);
-			memo = memo.add(manualCorrections(methodInfo));
+			if (
+				isAllowedVarName(methodName)
+			) {
+				const methodInfo = Map([
+					['methodName', methodName],
+					['arity', getArity(maybeFunc)],
+				]);
+				matches.add(manualCorrections(methodInfo));
+			} else {
+				try {
+					getArity(maybeFunc);
+				} catch (e) {
+					console.log(methodName, maybeFunc.toString());
+				}
+				const methodInfo = Map([
+					['methodName', methodName],
+					['arity', getArity(maybeFunc)],
+				]);
+				rejections.add(methodInfo);
+			}
 		}
 	}
 
-	return memo;
+	return {
+		'matches': matches.asImmutable(),
+		'rejections': rejections.asImmutable(),
+	};
 };
 
 const getPrototype = (constructor) => constructor.prototype;
 
 const getPrototypes = (constructors) => constructors.map(getPrototype);
 
-const addMethodsFromPrototype = (methodSet, prototype) => (
-	methodSet.union(filterMethods(prototype))
+
+const addToSet = (iterable) => (set = Set()) => set.union(iterable);
+
+const addMethodsFromPrototype = (methodInfoGroups, prototype) => {
+	const {matches, rejections} = filterMethods(prototype);
+	return methodInfoGroups
+		.update('matches', addToSet(matches))
+		.update('rejections', addToSet(rejections));
+};
+
+const sortByMethodName = (iterable) => (
+	iterable.sortBy((methodInfo) => methodInfo.get('methodName'))
 );
 
-const getMethodInfoList = (constructors) => (
+const getMethodInfoGroups = (constructors) => (
 	getPrototypes(constructors)
-		.reduce(addMethodsFromPrototype, Set())
-		.sortBy((methodInfo) => methodInfo.get('methodName'))
+		.reduce(addMethodsFromPrototype, Map())
+		.update('matches', sortByMethodName)
+		.update('rejections', sortByMethodName)
 );
 
 const generateMethodCheck = (methodName) => (
@@ -165,8 +194,10 @@ export const ${methodName} = (...args) => (obj) => (
 );
 `
 );
-const generateMethodWithoutArgs = (methodName, arity) => (
-`// Arity: ${arity}
+exports.generateMethodWithArgs = generateMethodWithArgs;
+
+const generateMethodWithoutArgs = (methodName) => (
+`// Arity: 0
 export const ${methodName} = (obj) => (
 	${generateMethodCheck(methodName)} ?
 		obj.${methodName}() :
@@ -174,6 +205,7 @@ export const ${methodName} = (obj) => (
 );
 `
 );
+exports.generateMethodWithoutArgs = generateMethodWithoutArgs;
 
 const generateMethod = (methodInfo) => {
 	const methodName = methodInfo.get('methodName');
@@ -182,7 +214,7 @@ const generateMethod = (methodInfo) => {
 	return (
 		arity > 0 ?
 			generateMethodWithArgs(methodName, arity) :
-			generateMethodWithoutArgs(methodName, arity)
+			generateMethodWithoutArgs(methodName)
 	);
 };
 
@@ -207,10 +239,16 @@ const getConstructors = () => (
 	])
 );
 
-const getImmutableInfo = composeLeft(getConstructors, getMethodInfoList);
-exports.getImmutableInfo = getImmutableInfo;
+const getImmutableInfoGroups = composeLeft(
+	getConstructors,
+	getMethodInfoGroups
+);
 
-const getCode = composeLeft(getImmutableInfo, generateCode);
+exports.getImmutableInfoGroups = getImmutableInfoGroups;
+
+const getMatches = (infoGroup) => infoGroup.get('matches');
+
+const getCode = composeLeft(getImmutableInfoGroups, getMatches, generateCode);
 exports.getCode = getCode;
 
 const writeImmutableFuncFile = (fileName) => {

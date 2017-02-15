@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint ./src",
     "test": "jest",
     "testwatch": "jest --watch",
-    "build": "node src/build.js && webpack && webpack -p",
+    "build": "yarn run lint && yarn run test && node src/build.js && webpack && webpack -p",
     "clean": "rimraf ./immutableFunc.*"
   },
   "main": "immutableFunc.umd.js",

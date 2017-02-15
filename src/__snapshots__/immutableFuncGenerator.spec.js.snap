@@ -999,3 +999,17 @@ export const zipWith = (...args) => (obj) => (
 );
 "
 `;
+
+exports[`test should reject quasi-private methods and methods with problematic names 1`] = `
+Array [
+  "__empty",
+  "__ensureOwner",
+  "__iterate",
+  "__iterator",
+  "__make",
+  "__toJS",
+  "__toString",
+  "__toStringMapper",
+  "delete",
+]
+`;
